@@ -40,13 +40,15 @@ class SidebarManager {
     }
 
     getDefaultData() {
-        return [
-            { id: 1, name: '电话', value: '13800138000', createdAt: Date.now() },
-            { id: 2, name: '邮箱', value: 'example@test.com', createdAt: Date.now() }
-        ];
+        return [];
+        // return [
+        //     { id: 1, name: '电话', value: '13800138000', createdAt: Date.now() },
+        //     { id: 2, name: '邮箱', value: 'example@test.com', createdAt: Date.now() }
+        // ];
     }
 
     async saveData() {
+        console.log("dataitems: ", this.dataItems);
         try {
             return new Promise((resolve) => {
                 chrome.storage.local.set({ dataItems: this.dataItems }, () => {

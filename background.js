@@ -26,8 +26,8 @@ chrome.runtime.onInstalled.addListener(() => {
 
     // 设置默认数据
     const defaultData = [
-        { id: 1, name: '电话', value: '13800138000', createdAt: Date.now() },
-        { id: 2, name: '邮箱', value: 'example@test.com', createdAt: Date.now() }
+        // { id: 1, name: '电话', value: '13800138000', createdAt: Date.now() },
+        // { id: 2, name: '邮箱', value: 'example@test.com', createdAt: Date.now() }
     ];
 
     chrome.storage.local.set({
