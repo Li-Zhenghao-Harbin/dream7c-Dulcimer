@@ -311,8 +311,8 @@ class SidebarManager {
         this.dataItems.push({
             id: newId,
             name: name,
-            value: value,
-            createdAt: Date.now()
+            value: value
+            // createdAt: Date.now()
         });
 
         this.saveData().then(() => {
@@ -396,6 +396,52 @@ class SidebarManager {
         document.getElementById('close-btn').addEventListener('click', () => {
             this.hideSidebar();
         });
+
+        // 导入
+        document.getElementById('import-btn').addEventListener('click', () => {
+            const hiddenFileInput = document.getElementById('hidden-file-input');
+            hiddenFileInput.click();
+        });
+
+        document.getElementById('hidden-file-input').addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    console.log('导入的数据：', data);
+                    this.showNotification('导入成功', 'success');
+                    this.dataItems = data;
+                    this.renderDataList();
+                } catch (error) {
+                    this.showNotification('导入失败', 'error');
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        // 导出
+        document.getElementById('export-btn').addEventListener('click', () => {
+            exportJSON(this.dataItems, '扬琴.json');
+        });
+
+        function exportJSON(data, filename = 'data.json') {
+            // 将 JSON 数据转换为字符串
+            const jsonString = JSON.stringify(data, null, 2);
+            // 创建 Blob 对象
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            // 创建下载链接
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            // 触发下载
+            a.click();
+            // 释放 URL 对象
+            URL.revokeObjectURL(url);
+        }
 
         // 自动聚焦到名称输入框
         setTimeout(() => {
