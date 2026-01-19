@@ -408,18 +408,52 @@ class SidebarManager {
             if (!file) return;
 
             const reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = async (e) => {
                 try {
                     const data = JSON.parse(e.target.result);
-                    // console.log('导入的数据：', data);
-                    this.showNotification('导入成功', 'success');
+
+                    // 验证数据格式
+                    if (!Array.isArray(data)) {
+                        this.showNotification('导入失败: 数据必须是数组格式', 'error');
+                        return;
+                    }
+
+                    // 验证每个数据项
+                    for (let item of data) {
+                        if (!item.id || !item.name || !item.value) {
+                            this.showNotification('导入失败: 数据项缺少必要字段', 'error');
+                            return;
+                        }
+                    }
+
+                    // 清空当前数据
+                    this.dataItems = [];
+
+                    // 使用导入的数据
                     this.dataItems = data;
+
+                    // 保存到 chrome.storage
+                    await this.saveData();
+
+                    // 重新渲染列表
                     this.renderDataList();
+                    this.resetForm();
+
+                    this.showNotification(`成功导入 ${data.length} 条数据`, 'success');
                 } catch (error) {
-                    this.showNotification('导入失败', 'error');
+                    console.error('导入失败:', error);
+                    this.showNotification('导入失败: 文件格式不正确', 'error');
                 }
             };
+
+            reader.onerror = () => {
+                this.showNotification('读取文件失败', 'error');
+            };
+
             reader.readAsText(file);
+
+            // 重置文件输入
+            event.target.value = '';
         });
 
         // 导出
@@ -428,7 +462,7 @@ class SidebarManager {
         });
 
         document.getElementById('about').addEventListener('click', () => {
-            alert('柒幻 扬琴\nv 1.1\nwww.dream7c.com');
+            alert('柒幻 扬琴\nv 1.2\nwww.dream7c.com');
         })
 
         function exportJSON(data, filename = 'data.json') {
