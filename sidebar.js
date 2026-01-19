@@ -427,6 +427,10 @@ class SidebarManager {
             exportJSON(this.dataItems, '扬琴.json');
         });
 
+        document.getElementById('about').addEventListener('click', () => {
+            alert('柒幻 扬琴\nv 1.1\nwww.dream7c.com');
+        })
+
         function exportJSON(data, filename = 'data.json') {
             // 将 JSON 数据转换为字符串
             const jsonString = JSON.stringify(data, null, 2);

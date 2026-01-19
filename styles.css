@@ -346,3 +346,17 @@
         transform: translateX(-50%) translateY(-10px);
     }
 }
+
+.question-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #007bff;
+    color: white;
+    font-weight: bold;
+    font-size: 12px;
+    cursor: pointer;
+}
