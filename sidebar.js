@@ -14,7 +14,7 @@ class SidebarManager {
         this.renderDataList();
         this.bindEvents();
 
-        console.log('侧边栏已初始化');
+        // console.log('侧边栏已初始化');
 
         // 监听来自父页面的消息
         window.addEventListener('message', this.handleMessage.bind(this));
@@ -48,7 +48,7 @@ class SidebarManager {
     }
 
     async saveData() {
-        console.log("dataitems: ", this.dataItems);
+        // console.log("dataitems: ", this.dataItems);
         try {
             return new Promise((resolve) => {
                 chrome.storage.local.set({ dataItems: this.dataItems }, () => {
@@ -201,7 +201,7 @@ class SidebarManager {
     }
 
     fillData(dataItem) {
-        console.log('填充数据:', dataItem);
+        // console.log('填充数据:', dataItem);
 
         // 发送消息给父页面（content script）
         window.parent.postMessage({
@@ -411,7 +411,7 @@ class SidebarManager {
             reader.onload = (e) => {
                 try {
                     const data = JSON.parse(e.target.result);
-                    console.log('导入的数据：', data);
+                    // console.log('导入的数据：', data);
                     this.showNotification('导入成功', 'success');
                     this.dataItems = data;
                     this.renderDataList();
@@ -491,7 +491,7 @@ class SidebarManager {
         }
 
         const data = event.data;
-        console.log('侧边栏收到消息:', data);
+        // console.log('侧边栏收到消息:', data);
 
         if (!data || !data.type) {
             return;
@@ -521,4 +521,4 @@ class SidebarManager {
 // 初始化侧边栏
 new SidebarManager();
 
-console.log('侧边栏脚本已加载');
+// console.log('侧边栏脚本已加载');

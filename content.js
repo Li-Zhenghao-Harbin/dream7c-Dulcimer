@@ -1,4 +1,4 @@
-console.log('数据填充器content script已加载');
+// console.log('数据填充器content script已加载');
 
 // 存储当前聚焦的输入框
 let lastFocusedInput = null;
@@ -33,7 +33,7 @@ document.addEventListener('click', function(e) {
 
     if (isInputElement(target)) {
         lastFocusedInput = target;
-        console.log('记录最后聚焦的输入框:', target);
+        // console.log('记录最后聚焦的输入框:', target);
     }
 });
 
@@ -77,7 +77,7 @@ function setInputValue(input, value) {
 
 // 填充数据到输入框
 function fillDataToInput(data) {
-    console.log('正在填充数据:', data);
+    // console.log('正在填充数据:', data);
 
     if (!data || !data.value) {
         console.error('数据无效');
@@ -86,22 +86,22 @@ function fillDataToInput(data) {
 
     // 首先尝试填充最后聚焦的输入框
     if (lastFocusedInput) {
-        console.log('使用最后聚焦的输入框:', lastFocusedInput);
+        // console.log('使用最后聚焦的输入框:', lastFocusedInput);
         const result = setInputValue(lastFocusedInput, data.value);
         if (result) {
-            console.log('填充成功');
+            // console.log('填充成功');
             return { success: true, message: '填充成功' };
         }
     }
 
     // 如果没有最后聚焦的输入框，尝试查找页面上的第一个输入框
-    console.log('查找页面上的输入框...');
+    // console.log('查找页面上的输入框...');
     const firstInput = document.querySelector('input, textarea');
     if (firstInput) {
-        console.log('找到第一个输入框:', firstInput);
+        // console.log('找到第一个输入框:', firstInput);
         const result = setInputValue(firstInput, data.value);
         if (result) {
-            console.log('填充成功');
+            // console.log('填充成功');
             return { success: true, message: '填充成功' };
         }
     }
@@ -122,7 +122,7 @@ class SidebarManager {
     init() {
         // 监听来自background的消息
         chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-            console.log('收到消息:', request);
+            // console.log('收到消息:', request);
 
             if (request.action === 'toggleSidebar') {
                 this.toggleSidebar();
@@ -141,17 +141,17 @@ class SidebarManager {
         // 监听来自iframe的消息
         window.addEventListener('message', this.handleMessage.bind(this));
 
-        console.log('侧边栏管理器初始化完成');
+        // console.log('侧边栏管理器初始化完成');
     }
 
     // 注入侧边栏到页面
     injectSidebar() {
         if (this.sidebarIframe) {
-            console.log('侧边栏已存在');
+            // console.log('侧边栏已存在');
             return this.sidebarIframe;
         }
 
-        console.log('开始注入侧边栏...');
+        // console.log('开始注入侧边栏...');
 
         // 创建iframe来加载侧边栏
         this.sidebarIframe = document.createElement('iframe');
@@ -173,7 +173,7 @@ class SidebarManager {
         // 加载侧边栏页面
         try {
             this.sidebarIframe.src = chrome.runtime.getURL('sidebar.html');
-            console.log('侧边栏URL:', this.sidebarIframe.src);
+            // console.log('侧边栏URL:', this.sidebarIframe.src);
         } catch (error) {
             console.error('获取侧边栏URL失败:', error);
             return null;
@@ -181,7 +181,7 @@ class SidebarManager {
 
         document.body.appendChild(this.sidebarIframe);
 
-        console.log('侧边栏已注入');
+        // console.log('侧边栏已注入');
 
         return this.sidebarIframe;
     }
@@ -211,7 +211,7 @@ class SidebarManager {
         this.sidebarIframe.classList.remove('hidden');
         this.isVisible = true;
 
-        console.log('显示侧边栏');
+        // console.log('显示侧边栏');
 
         // 通知iframe侧边栏已显示
         this.sendMessageToIframe({
@@ -224,7 +224,7 @@ class SidebarManager {
             this.sidebarIframe.classList.add('hidden');
             this.isVisible = false;
 
-            console.log('隐藏侧边栏');
+            // console.log('隐藏侧边栏');
 
             // 通知iframe侧边栏已隐藏
             this.sendMessageToIframe({
@@ -253,7 +253,7 @@ class SidebarManager {
         }
 
         const data = event.data;
-        console.log('收到iframe消息:', data);
+        // console.log('收到iframe消息:', data);
 
         if (!data || !data.type) {
             return;
@@ -286,4 +286,4 @@ const sidebarManager = new SidebarManager();
 // 暴露给控制台调试
 window.sidebarManager = sidebarManager;
 
-console.log('数据填充器已就绪，点击扩展图标打开侧边栏');
+// console.log('数据填充器已就绪，点击扩展图标打开侧边栏');
