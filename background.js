@@ -49,6 +49,8 @@ chrome.runtime.onInstalled.addListener((details) => {
         chrome.storage.local.set({
             dataItems: defaultData,
             dataItemsBackup: defaultData,
+            groups: [],
+            groupsBackup: [],
             dataItemsUpdatedAt: Date.now()
         }, () => {
             if (chrome.runtime.lastError) {

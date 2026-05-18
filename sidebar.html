@@ -18,27 +18,57 @@
     </div>
 
     <div class="sidebar-content">
+        <div class="group-panel collapsed" id="group-panel">
+            <div class="group-panel-head">
+                <div class="group-panel-title">分组管理</div>
+                <div class="group-panel-actions">
+                    <button id="toggle-group-panel-btn" class="group-head-btn" title="展开/收起">展开</button>
+                </div>
+            </div>
+            <div class="group-panel-body">
+            <div class="group-create-row">
+                <input type="text" id="group-name" placeholder="输入新分组名称" maxlength="20">
+                <button id="create-group-btn" class="group-create-btn">创建</button>
+            </div>
+            <div class="form-group">
+                <label>分组筛选：</label>
+                <select id="group-filter"></select>
+            </div>
+            <div id="group-list" class="group-list"></div>
+            </div>
+        </div>
+
         <div id="data-list">
             <!-- 数据项会动态添加到这里 -->
         </div>
 
-        <div class="add-form">
-            <div class="form-title" id="form-title">添加新数据</div>
-
-            <div class="form-group">
-                <label>名称：</label>
-                <input type="text" id="data-name" placeholder="例如：邮箱、电话" maxlength="20">
+        <div class="add-form" id="add-form">
+            <div class="add-form-head">
+                <div class="group-panel-title" id="form-title">添加新数据</div>
+                <button id="toggle-add-form-btn" class="group-head-btn" title="展开/收起">收起</button>
             </div>
 
-            <div class="form-group">
-                <label>内容：</label>
-                <input type="text" id="data-value" placeholder="要填充的具体内容" maxlength="100">
-            </div>
+            <div class="add-form-body">
+                <div class="form-group">
+                    <label>名称：</label>
+                    <input type="text" id="data-name" placeholder="例如：邮箱、电话" maxlength="20">
+                </div>
 
-            <div class="form-actions">
-                <button id="add-btn" class="add-btn">添加数据</button>
-                <button id="update-btn" class="update-btn">更新数据</button>
-                <button id="cancel-btn" class="cancel-btn">取消编辑</button>
+                <div class="form-group">
+                    <label>内容：</label>
+                    <input type="text" id="data-value" placeholder="要填充的具体内容" maxlength="100">
+                </div>
+
+                <div class="form-group">
+                    <label>所属分组（可多选）：</label>
+                    <div id="group-selector" class="group-selector"></div>
+                </div>
+
+                <div class="form-actions">
+                    <button id="add-btn" class="add-btn">添加数据</button>
+                    <button id="update-btn" class="update-btn">更新数据</button>
+                    <button id="cancel-btn" class="cancel-btn">取消编辑</button>
+                </div>
             </div>
         </div>
     </div>
