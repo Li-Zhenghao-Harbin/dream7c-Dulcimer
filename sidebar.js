@@ -795,8 +795,8 @@ class SidebarManager {
             }, '扬琴.json');
         });
 
-        document.getElementById('about').addEventListener('click', () => {
-            alert('柒幻 扬琴\nv 1.2\nwww.dream7c.com');
+        document.getElementById('about-question-circle').addEventListener('click', () => {
+            alert('柒幻 扬琴\nv 1.5\nwww.dream7c.com');
         });
 
         function exportJSON(data, filename = 'data.json') {
