@@ -23,12 +23,27 @@ class SidebarManager {
     async loadData() {
         try {
             return new Promise((resolve) => {
-                chrome.storage.local.get(['dataItems'], (result) => {
+                chrome.storage.local.get(['dataItems', 'dataItemsBackup'], (result) => {
                     if (chrome.runtime.lastError) {
                         console.error('加载数据时出错:', chrome.runtime.lastError);
                         this.dataItems = this.getDefaultData();
                     } else {
-                        this.dataItems = result.dataItems || this.getDefaultData();
+                        const primaryData = Array.isArray(result.dataItems) ? result.dataItems : null;
+                        const backupData = Array.isArray(result.dataItemsBackup) ? result.dataItemsBackup : null;
+
+                        if (primaryData) {
+                            this.dataItems = primaryData;
+                        } else if (backupData) {
+                            // 主数据异常缺失时，自动从备份恢复
+                            this.dataItems = backupData;
+                            chrome.storage.local.set({ dataItems: backupData }, () => {
+                                if (chrome.runtime.lastError) {
+                                    console.error('自动恢复主数据失败:', chrome.runtime.lastError);
+                                }
+                            });
+                        } else {
+                            this.dataItems = this.getDefaultData();
+                        }
                     }
                     resolve();
                 });
@@ -51,7 +66,11 @@ class SidebarManager {
         // console.log("dataitems: ", this.dataItems);
         try {
             return new Promise((resolve) => {
-                chrome.storage.local.set({ dataItems: this.dataItems }, () => {
+                chrome.storage.local.set({
+                    dataItems: this.dataItems,
+                    dataItemsBackup: this.dataItems,
+                    dataItemsUpdatedAt: Date.now()
+                }, () => {
                     if (chrome.runtime.lastError) {
                         console.error('保存数据时出错:', chrome.runtime.lastError);
                     }

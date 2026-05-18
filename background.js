@@ -20,24 +20,43 @@ chrome.action.onClicked.addListener((tab) => {
     });
 });
 
-// 扩展安装时的初始化
-chrome.runtime.onInstalled.addListener(() => {
-    // console.log('侧边栏数据填充器已安装');
+// 扩展安装/更新时的初始化
+chrome.runtime.onInstalled.addListener((details) => {
+    // console.log('侧边栏数据填充器 onInstalled:', details.reason);
 
-    // 设置默认数据
+    // 仅首次安装时尝试初始化；更新时不能覆盖用户数据
+    if (details.reason !== 'install') {
+        return;
+    }
+
+    // 默认数据（留空表示首次安装时显示“暂无数据”）
     const defaultData = [
         // { id: 1, name: '电话', value: '13800138000', createdAt: Date.now() },
         // { id: 2, name: '邮箱', value: 'example@test.com', createdAt: Date.now() }
     ];
 
-    chrome.storage.local.set({
-        dataItems: defaultData
-    }, () => {
+    chrome.storage.local.get(['dataItems'], (result) => {
         if (chrome.runtime.lastError) {
-            console.error('设置默认数据时出错:', chrome.runtime.lastError);
-        } else {
-            // console.log('默认数据已设置');
+            console.error('读取初始化数据时出错:', chrome.runtime.lastError);
+            return;
         }
+
+        const hasExistingData = Array.isArray(result.dataItems);
+        if (hasExistingData) {
+            return;
+        }
+
+        chrome.storage.local.set({
+            dataItems: defaultData,
+            dataItemsBackup: defaultData,
+            dataItemsUpdatedAt: Date.now()
+        }, () => {
+            if (chrome.runtime.lastError) {
+                console.error('设置默认数据时出错:', chrome.runtime.lastError);
+            } else {
+                // console.log('默认数据已初始化');
+            }
+        });
     });
 });
 
