@@ -10,6 +10,7 @@ class SidebarManager {
         this.currentEditId = null;
         this.draggedItem = null;
         this.dragStartIndex = null;
+        this.dragHasMoved = false;
 
         this.init();
     }
@@ -296,9 +297,14 @@ class SidebarManager {
         const items = document.querySelectorAll('.data-item');
 
         items.forEach(item => {
-            item.addEventListener('dragstart', () => {
+            item.addEventListener('dragstart', (e) => {
                 this.draggedItem = item;
                 this.dragStartIndex = Array.from(items).indexOf(item);
+                this.dragHasMoved = false;
+                if (e.dataTransfer) {
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', item.dataset.id || '');
+                }
                 setTimeout(() => {
                     item.classList.add('dragging');
                 }, 0);
@@ -306,8 +312,14 @@ class SidebarManager {
 
             item.addEventListener('dragend', () => {
                 item.classList.remove('dragging');
+
+                if (this.dragHasMoved) {
+                    this.reorderDataItems(true);
+                }
+
                 this.draggedItem = null;
                 this.dragStartIndex = null;
+                this.dragHasMoved = false;
             });
 
             item.addEventListener('dragover', (e) => {
@@ -328,13 +340,13 @@ class SidebarManager {
                 } else {
                     item.parentNode.insertBefore(this.draggedItem, item);
                 }
-
-                this.reorderDataItems();
+                this.dragStartIndex = dragOverIndex;
+                this.dragHasMoved = true;
             });
         });
     }
 
-    reorderDataItems() {
+    reorderDataItems(showSuccessNotice = false) {
         if (this.currentFilterGroupId !== 'all') {
             return;
         }
@@ -352,7 +364,9 @@ class SidebarManager {
 
         this.dataItems = newOrder;
         this.saveData().then(() => {
-            this.showNotification('顺序已保存', 'success');
+            if (showSuccessNotice) {
+                this.showNotification('顺序已保存', 'success');
+            }
         });
     }
 
