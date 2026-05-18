@@ -6,6 +6,7 @@ class SidebarManager {
         this.currentFilterGroupId = 'all';
         this.isGroupPanelCollapsed = true;
         this.isAddFormCollapsed = false;
+        this.sidebarSide = 'right';
         this.currentEditId = null;
         this.draggedItem = null;
         this.dragStartIndex = null;
@@ -719,6 +720,12 @@ class SidebarManager {
             this.hideSidebar();
         });
 
+        document.getElementById('side-toggle-btn').addEventListener('click', () => {
+            window.parent.postMessage({
+                type: 'DATA_FILLER_TOGGLE_SIDE'
+            }, '*');
+        });
+
         document.getElementById('import-btn').addEventListener('click', () => {
             const hiddenFileInput = document.getElementById('hidden-file-input');
             hiddenFileInput.click();
@@ -798,6 +805,7 @@ class SidebarManager {
 
         this.updateGroupPanelState();
         this.updateAddFormState();
+        this.updateSideToggleButton();
     }
 
     updateGroupPanelState() {
@@ -832,6 +840,16 @@ class SidebarManager {
     toggleAddForm() {
         this.isAddFormCollapsed = !this.isAddFormCollapsed;
         this.updateAddFormState();
+    }
+
+    updateSideToggleButton() {
+        const button = document.getElementById('side-toggle-btn');
+        if (!button) {
+            return;
+        }
+
+        button.textContent = '⇄';
+        button.title = this.sidebarSide === 'right' ? '切换到左侧' : '切换到右侧';
     }
 
     hideSidebar() {
@@ -871,8 +889,18 @@ class SidebarManager {
 
         switch (data.type) {
             case 'DATA_FILLER_SHOW_SIDEBAR':
+                if (data.sidebarSide === 'left' || data.sidebarSide === 'right') {
+                    this.sidebarSide = data.sidebarSide;
+                    this.updateSideToggleButton();
+                }
                 break;
             case 'DATA_FILLER_HIDE_SIDEBAR':
+                break;
+            case 'DATA_FILLER_SIDEBAR_SIDE_CHANGED':
+                if (data.sidebarSide === 'left' || data.sidebarSide === 'right') {
+                    this.sidebarSide = data.sidebarSide;
+                    this.updateSideToggleButton();
+                }
                 break;
             case 'DATA_FILLER_FILL_RESULT':
                 if (data.success) {

@@ -114,12 +114,22 @@ function fillDataToInput(data) {
 class SidebarManager {
     constructor() {
         this.sidebarIframe = null;
+        this.sidebarResizer = null;
+        this.resizeOverlay = null;
         this.isVisible = false;
+        this.sidebarWidth = 305;
+        this.sidebarSide = 'right';
+        this.isResizing = false;
+        this.resizerWidth = 10;
+        this.minSidebarWidth = 260;
+        this.maxSidebarWidth = 720;
 
         this.init();
     }
 
     init() {
+        this.loadSidebarLayout();
+
         // 监听来自background的消息
         chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             // console.log('收到消息:', request);
@@ -140,8 +150,170 @@ class SidebarManager {
 
         // 监听来自iframe的消息
         window.addEventListener('message', this.handleMessage.bind(this));
+        window.addEventListener('mousemove', this.handleResizeMove.bind(this));
+        window.addEventListener('mouseup', this.stopResize.bind(this));
+        window.addEventListener('blur', this.stopResize.bind(this));
+        window.addEventListener('resize', () => {
+            this.sidebarWidth = this.normalizeSidebarWidth(this.sidebarWidth);
+            this.applySidebarLayout();
+        });
 
         // console.log('侧边栏管理器初始化完成');
+    }
+
+    loadSidebarLayout() {
+        chrome.storage.local.get(['sidebarWidth', 'sidebarSide'], (result) => {
+            if (chrome.runtime.lastError) {
+                console.error('读取侧边栏布局失败:', chrome.runtime.lastError);
+                return;
+            }
+
+            if (typeof result.sidebarWidth === 'number' && Number.isFinite(result.sidebarWidth)) {
+                this.sidebarWidth = this.normalizeSidebarWidth(result.sidebarWidth);
+            }
+
+            if (result.sidebarSide === 'left' || result.sidebarSide === 'right') {
+                this.sidebarSide = result.sidebarSide;
+            }
+
+            this.applySidebarLayout();
+        });
+    }
+
+    normalizeSidebarWidth(width) {
+        const viewportBasedMax = Math.max(this.minSidebarWidth, Math.min(this.maxSidebarWidth, window.innerWidth - 80));
+        return Math.max(this.minSidebarWidth, Math.min(viewportBasedMax, Math.round(width)));
+    }
+
+    saveSidebarLayout() {
+        chrome.storage.local.set({
+            sidebarWidth: this.sidebarWidth,
+            sidebarSide: this.sidebarSide
+        }, () => {
+            if (chrome.runtime.lastError) {
+                console.error('保存侧边栏布局失败:', chrome.runtime.lastError);
+            }
+        });
+    }
+
+    applySidebarLayout() {
+        if (!this.sidebarIframe) {
+            return;
+        }
+
+        const side = this.sidebarSide;
+        this.sidebarWidth = this.normalizeSidebarWidth(this.sidebarWidth);
+
+        this.sidebarIframe.style.width = `${this.sidebarWidth}px`;
+        this.sidebarIframe.style.left = side === 'left' ? '0' : 'auto';
+        this.sidebarIframe.style.right = side === 'right' ? '0' : 'auto';
+        this.sidebarIframe.dataset.side = side;
+        this.sidebarIframe.classList.toggle('left-side', side === 'left');
+        this.sidebarIframe.classList.toggle('right-side', side === 'right');
+
+        if (this.sidebarResizer) {
+            const handleHalf = Math.floor(this.resizerWidth / 2);
+            const boundaryX = side === 'right'
+                ? window.innerWidth - this.sidebarWidth
+                : this.sidebarWidth;
+            this.sidebarResizer.style.left = `${boundaryX - handleHalf}px`;
+            this.sidebarResizer.style.right = 'auto';
+            this.sidebarResizer.dataset.side = side;
+        }
+    }
+
+    createResizer() {
+        if (this.sidebarResizer) {
+            return this.sidebarResizer;
+        }
+
+        const resizer = document.createElement('div');
+        resizer.id = 'data-filler-sidebar-resizer';
+        resizer.style.cssText = `
+      position: fixed;
+      top: 0;
+      width: ${this.resizerWidth}px;
+      height: 100vh;
+      z-index: 2147483647;
+      cursor: ew-resize;
+      background: transparent;
+    `;
+
+        resizer.addEventListener('mousedown', (event) => {
+            if (event.button !== 0) {
+                return;
+            }
+            event.preventDefault();
+            this.startResize();
+        });
+
+        document.body.appendChild(resizer);
+        this.sidebarResizer = resizer;
+        return resizer;
+    }
+
+    startResize() {
+        this.isResizing = true;
+        document.body.style.userSelect = 'none';
+
+        if (!this.resizeOverlay) {
+            const overlay = document.createElement('div');
+            overlay.id = 'data-filler-sidebar-resize-overlay';
+            overlay.style.cssText = `
+        position: fixed;
+        inset: 0;
+        z-index: 2147483647;
+        cursor: ew-resize;
+        background: transparent;
+      `;
+            document.body.appendChild(overlay);
+            this.resizeOverlay = overlay;
+        } else if (!this.resizeOverlay.parentNode) {
+            document.body.appendChild(this.resizeOverlay);
+        }
+
+        if (this.sidebarIframe) {
+            this.sidebarIframe.style.pointerEvents = 'none';
+        }
+    }
+
+    handleResizeMove(event) {
+        if (!this.isResizing || !this.sidebarIframe) {
+            return;
+        }
+
+        const width = this.sidebarSide === 'right'
+            ? window.innerWidth - event.clientX
+            : event.clientX;
+
+        this.sidebarWidth = this.normalizeSidebarWidth(width);
+        this.applySidebarLayout();
+    }
+
+    stopResize() {
+        if (!this.isResizing) {
+            return;
+        }
+
+        this.isResizing = false;
+        document.body.style.userSelect = '';
+        if (this.resizeOverlay && this.resizeOverlay.parentNode) {
+            this.resizeOverlay.parentNode.removeChild(this.resizeOverlay);
+        }
+        if (this.sidebarIframe) {
+            this.sidebarIframe.style.pointerEvents = '';
+        }
+        this.saveSidebarLayout();
+    }
+
+    toggleSidebarSide() {
+        this.sidebarSide = this.sidebarSide === 'right' ? 'left' : 'right';
+        this.applySidebarLayout();
+        this.saveSidebarLayout();
+        this.sendMessageToIframe({
+            type: 'DATA_FILLER_SIDEBAR_SIDE_CHANGED',
+            sidebarSide: this.sidebarSide
+        });
     }
 
     // 注入侧边栏到页面
@@ -161,7 +333,7 @@ class SidebarManager {
       position: fixed;
       top: 0;
       right: 0;
-      width: 320px;
+      width: ${this.sidebarWidth}px;
       height: 100vh;
       border: none;
       z-index: 2147483647;
@@ -180,6 +352,8 @@ class SidebarManager {
         }
 
         document.body.appendChild(this.sidebarIframe);
+        this.createResizer();
+        this.applySidebarLayout();
 
         // console.log('侧边栏已注入');
 
@@ -209,19 +383,26 @@ class SidebarManager {
         }
 
         this.sidebarIframe.classList.remove('hidden');
+        if (this.sidebarResizer) {
+            this.sidebarResizer.classList.remove('hidden');
+        }
         this.isVisible = true;
 
         // console.log('显示侧边栏');
 
         // 通知iframe侧边栏已显示
         this.sendMessageToIframe({
-            type: 'DATA_FILLER_SHOW_SIDEBAR'
+            type: 'DATA_FILLER_SHOW_SIDEBAR',
+            sidebarSide: this.sidebarSide
         });
     }
 
     hideSidebar() {
         if (this.sidebarIframe) {
             this.sidebarIframe.classList.add('hidden');
+            if (this.sidebarResizer) {
+                this.sidebarResizer.classList.add('hidden');
+            }
             this.isVisible = false;
 
             // console.log('隐藏侧边栏');
@@ -275,6 +456,9 @@ class SidebarManager {
             case 'DATA_FILLER_HIDE_SIDEBAR':
                 // 隐藏侧边栏
                 this.hideSidebar();
+                break;
+            case 'DATA_FILLER_TOGGLE_SIDE':
+                this.toggleSidebarSide();
                 break;
         }
     }
