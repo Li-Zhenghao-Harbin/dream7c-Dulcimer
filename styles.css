@@ -428,31 +428,39 @@ body {
 }
 
 .group-selector-item {
-    display: grid;
-    grid-template-columns: 14px 1fr;
+    display: flex;
     align-items: center;
-    column-gap: 8px;
+    gap: 8px;
+    width: 100%;
     font-size: 12px;
     color: #444;
     margin-bottom: 5px;
-    min-height: 20px;
+    min-height: 22px;
+    white-space: nowrap;
 }
 
 .group-selector-item:last-child {
     margin-bottom: 0;
 }
 
-.group-selector-checkbox {
+.group-selector .group-selector-checkbox {
     width: 14px;
     height: 14px;
     margin: 0;
-    align-self: center;
-    justify-self: center;
+    flex: 0 0 14px;
+    margin-left: auto;
+    order: 2;
 }
 
 .group-selector-text {
-    display: block;
+    display: inline-block;
+    flex: 1 1 auto;
+    min-width: 0;
     line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    order: 1;
 }
 
 .form-actions {
