@@ -21,7 +21,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"],
+      "js": ["content.js", "vendor/onnxruntime-web/ort.min.js", "ai_autofill_content.js"],
       "css": ["styles.css"],
       "run_at": "document_idle"
     }
@@ -29,7 +29,21 @@
 
   "web_accessible_resources": [
     {
-      "resources": ["sidebar.html", "sidebar.js", "styles.css"],
+      "resources": [
+        "sidebar.html",
+        "sidebar.js",
+        "sidebar_ai_addon.js",
+        "styles.css",
+        "vendor/onnxruntime-web/ort.min.js",
+        "vendor/onnxruntime-web/ort-wasm-simd-threaded.jsep.mjs",
+        "vendor/onnxruntime-web/ort-wasm-simd.jsep.mjs",
+        "vendor/onnxruntime-web/ort-wasm-simd-threaded.jsep.wasm",
+        "vendor/onnxruntime-web/ort-wasm-simd.jsep.wasm",
+        "vendor/onnxruntime-web/ort-wasm-simd-threaded.wasm",
+        "vendor/onnxruntime-web/ort-wasm-simd.wasm",
+        "vendor/onnxruntime-web/ort-wasm-threaded.wasm",
+        "vendor/onnxruntime-web/ort-wasm.wasm"
+      ],
       "matches": ["<all_urls>"]
     }
   ],
