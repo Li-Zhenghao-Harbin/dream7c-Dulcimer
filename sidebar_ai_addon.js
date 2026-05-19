@@ -1,7 +1,7 @@
-// Sidebar enhancer script: select local ONNX model and trigger AI fill.
+// 侧栏增强脚本：选择本地 ONNX 模型并触发 AI 填充。
 (function () {
     let selectedModel = null;
-    const LOG_PREFIX = '[AI-FILL][SIDEBAR]';
+    const LOG_PREFIX = '[AI填充][侧栏]';
     const log = (...args) => console.log(LOG_PREFIX, ...args);
     const warn = (...args) => console.warn(LOG_PREFIX, ...args);
     const errlog = (...args) => console.error(LOG_PREFIX, ...args);
@@ -19,11 +19,11 @@
     function getDataItemsFromStorage(cb) {
         chrome.storage.local.get(['dataItems'], (result) => {
             if (chrome.runtime.lastError) {
-                errlog('failed to read dataItems from storage', chrome.runtime.lastError);
+                errlog('读取 dataItems 失败', chrome.runtime.lastError);
                 cb([]);
                 return;
             }
-            log('loaded dataItems from storage', { count: Array.isArray(result.dataItems) ? result.dataItems.length : 0 });
+            log('已读取 dataItems', { count: Array.isArray(result.dataItems) ? result.dataItems.length : 0 });
             cb(Array.isArray(result.dataItems) ? result.dataItems : []);
         });
     }
@@ -42,26 +42,26 @@
         const modelBtn = document.createElement('button');
         modelBtn.className = 'io-btn';
         modelBtn.id = 'ai-model-btn';
-        modelBtn.title = 'Select local ONNX model';
-        modelBtn.textContent = 'Model';
+        modelBtn.title = '选择本地 ONNX 模型';
+        modelBtn.textContent = '选择模型';
         container.insertBefore(modelBtn, container.firstChild);
 
         const fillBtn = document.createElement('button');
         fillBtn.className = 'io-btn';
         fillBtn.id = 'ai-fill-btn';
-        fillBtn.title = 'Fill fields using selected ONNX model';
-        fillBtn.textContent = 'AI Fill';
+        fillBtn.title = '使用已选 ONNX 模型填充字段';
+        fillBtn.textContent = 'AI填充';
         container.insertBefore(fillBtn, container.firstChild);
 
         modelBtn.addEventListener('click', () => {
-            log('model button clicked');
+            log('点击选择模型按钮');
             modelInput.click();
         });
 
         modelInput.addEventListener('change', async (event) => {
             const file = event.target.files && event.target.files[0];
             if (!file) {
-                warn('model selection canceled');
+                warn('已取消选择模型');
                 return;
             }
             try {
@@ -70,31 +70,31 @@
                     name: file.name,
                     bytes: buffer
                 };
-                log('model loaded', { name: file.name, bytes: buffer.byteLength });
-                showNotification(`Model loaded: ${file.name}`, 'success');
+                log('模型加载完成', { name: file.name, bytes: buffer.byteLength });
+                showNotification(`模型已加载：${file.name}`, 'success');
             } catch (err) {
-                errlog('failed to read model file', err);
+                errlog('读取模型文件失败', err);
                 selectedModel = null;
-                showNotification('Failed to load model file', 'error');
+                showNotification('模型文件加载失败', 'error');
             }
         });
 
         fillBtn.addEventListener('click', () => {
-            log('AI Fill clicked');
+            log('点击 AI 填充');
             if (!selectedModel || !selectedModel.bytes) {
-                warn('fill blocked: model not selected');
-                showNotification('Please select an ONNX model first', 'error');
+                warn('已阻止填充：未选择模型');
+                showNotification('请先选择 ONNX 模型', 'error');
                 return;
             }
 
             getDataItemsFromStorage((dataItems) => {
                 if (!dataItems.length) {
-                    warn('fill blocked: no data items');
-                    showNotification('No saved data items', 'error');
+                    warn('已阻止填充：没有可用数据');
+                    showNotification('没有可用的数据项', 'error');
                     return;
                 }
 
-                log('posting fill request to content script', {
+                log('向 content script 发送填充请求', {
                     modelName: selectedModel.name,
                     modelBytes: selectedModel.bytes.byteLength,
                     dataItemCount: dataItems.length
@@ -105,7 +105,7 @@
                     modelName: selectedModel.name,
                     modelBuffer: selectedModel.bytes
                 }, '*');
-                showNotification(`Running ONNX model: ${selectedModel.name}`, 'info');
+                showNotification(`正在运行 ONNX 模型：${selectedModel.name}`, 'info');
             });
         });
     }
@@ -114,11 +114,11 @@
         if (event.source !== window.parent) return;
         const data = event.data;
         if (!data || data.type !== 'DATA_FILLER_AI_FILL_RESULT') return;
-        log('received fill result', data);
+        log('收到填充结果', data);
         if (data.success) {
-            showNotification(`AI fill completed: ${data.filledCount || 0} fields`, 'success');
+            showNotification(`AI填充完成：已填充 ${data.filledCount || 0} 项`, 'success');
         } else {
-            showNotification(`AI fill failed: ${data.message || 'unknown'}`, 'error');
+            showNotification(`AI填充失败：${data.message || '未知错误'}`, 'error');
         }
     });
 

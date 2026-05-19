@@ -1,8 +1,8 @@
-// AI autofill script: receives local ONNX model bytes and fills page fields via ONNX inference.
+// AI 填充脚本：接收本地 ONNX 模型并执行页面字段推理填充。
 (function () {
     const modelSessionCache = new Map();
     let runtimeConfigured = false;
-    const LOG_PREFIX = '[AI-FILL][CONTENT]';
+    const LOG_PREFIX = '[AI填充][页面]';
     const log = (...args) => console.log(LOG_PREFIX, ...args);
     const warn = (...args) => console.warn(LOG_PREFIX, ...args);
     const errlog = (...args) => console.error(LOG_PREFIX, ...args);
@@ -55,6 +55,22 @@
         ].filter(Boolean).join(' ');
     }
 
+    function normalizeKey(text) {
+        return String(text || '').trim().toLowerCase().replace(/\s+/g, '');
+    }
+
+    function fieldExactKeys(input) {
+        return [
+            getLabelText(input),
+            input.placeholder || '',
+            input.name || '',
+            input.id || '',
+            input.getAttribute ? (input.getAttribute('aria-label') || '') : ''
+        ]
+            .map(normalizeKey)
+            .filter(Boolean);
+    }
+
     function entryText(item) {
         return `${item.name || ''} ${item.value || ''}`;
     }
@@ -91,7 +107,7 @@
     async function getSession(modelName, modelBuffer) {
         const key = `${modelName || 'model'}:${modelBuffer.byteLength}`;
         if (modelSessionCache.has(key)) {
-            log('reusing cached ONNX session', { key });
+            log('复用已缓存 ONNX 会话', { key });
             return modelSessionCache.get(key);
         }
         if (!globalThis.ort || !ort.InferenceSession) {
@@ -101,14 +117,14 @@
             ort.env.wasm.wasmPaths = chrome.runtime.getURL('vendor/onnxruntime-web/');
             ort.env.wasm.proxy = false;
             runtimeConfigured = true;
-            log('configured wasmPaths', ort.env.wasm.wasmPaths);
+            log('已配置 wasmPaths', ort.env.wasm.wasmPaths);
         }
-        log('creating ONNX session', { modelName, bytes: modelBuffer.byteLength });
+        log('开始创建 ONNX 会话', { modelName, bytes: modelBuffer.byteLength });
         const session = await ort.InferenceSession.create(modelBuffer, {
             executionProviders: ['wasm']
         });
         modelSessionCache.set(key, session);
-        log('created ONNX session', { key });
+        log('ONNX 会话创建成功', { key });
         return session;
     }
 
@@ -119,22 +135,43 @@
         return { data, rows: dims[0], cols: dims[1] };
     }
 
-    function greedyMatch(logits, numFields, numEntries) {
-        const triples = [];
+    function softmax(row) {
+        let max = -Infinity;
+        for (const v of row) max = Math.max(max, v);
+        const exps = row.map(v => Math.exp(v - max));
+        const sum = exps.reduce((a, b) => a + b, 0);
+        return exps.map(v => v / (sum || 1));
+    }
+
+    function matchWithConfidence(logits, numFields, numEntries, threshold) {
+        const candidates = [];
         for (let f = 0; f < numFields; f++) {
+            const row = [];
             for (let e = 0; e < numEntries; e++) {
-                triples.push({ f, e, s: logits[f * numEntries + e] });
+                row.push(logits[f * numEntries + e]);
             }
+            const probs = softmax(row);
+            let bestEntry = 0;
+            let bestProb = probs[0] || 0;
+            for (let e = 1; e < probs.length; e++) {
+                if (probs[e] > bestProb) {
+                    bestProb = probs[e];
+                    bestEntry = e;
+                }
+            }
+            candidates.push({ fieldIdx: f, entryIdx: bestEntry, confidence: bestProb });
         }
-        triples.sort((a, b) => b.s - a.s);
-        const usedF = new Set();
-        const usedE = new Set();
+
+        candidates.sort((a, b) => b.confidence - a.confidence);
+        const usedFields = new Set();
+        const usedEntries = new Set();
         const pairs = [];
-        for (const t of triples) {
-            if (usedF.has(t.f) || usedE.has(t.e)) continue;
-            usedF.add(t.f);
-            usedE.add(t.e);
-            pairs.push({ fieldIdx: t.f, entryIdx: t.e });
+        for (const c of candidates) {
+            if (c.confidence < threshold) continue;
+            if (usedFields.has(c.fieldIdx) || usedEntries.has(c.entryIdx)) continue;
+            usedFields.add(c.fieldIdx);
+            usedEntries.add(c.entryIdx);
+            pairs.push(c);
         }
         return pairs;
     }
@@ -143,35 +180,75 @@
         const dataItems = payload.dataItems;
         const modelBuffer = payload.modelBuffer;
         const modelName = payload.modelName || 'model.onnx';
+        const confidenceThreshold = typeof payload.confidenceThreshold === 'number'
+            ? Math.max(0, Math.min(1, payload.confidenceThreshold))
+            : 0.25;
         const t0 = Date.now();
-        log('start fill request', {
+        log('开始处理填充请求', {
             modelName,
             hasModelBuffer: modelBuffer instanceof ArrayBuffer,
-            dataItemCount: Array.isArray(dataItems) ? dataItems.length : 0
+            dataItemCount: Array.isArray(dataItems) ? dataItems.length : 0,
+            confidenceThreshold
         });
 
         if (!Array.isArray(dataItems) || dataItems.length === 0) {
-            warn('abort: no data items');
-            return { success: false, message: 'no_data', filledCount: 0 };
+            warn('中止：没有数据项');
+            return { success: false, message: '没有数据项', filledCount: 0 };
         }
         if (!(modelBuffer instanceof ArrayBuffer)) {
-            warn('abort: model buffer missing');
-            return { success: false, message: 'model_not_selected', filledCount: 0 };
+            warn('中止：模型数据缺失');
+            return { success: false, message: '未选择模型', filledCount: 0 };
         }
 
         const fields = Array.from(document.querySelectorAll('input, textarea, [contenteditable="true"]')).filter(isFillableInput);
         const emptyFields = fields.filter(f => f.isContentEditable || !String(f.value || '').trim());
-        log('field scan', {
+        log('字段扫描结果', {
             allFillableFields: fields.length,
             emptyFields: emptyFields.length
         });
         if (!emptyFields.length) {
-            warn('abort: no empty fields');
-            return { success: false, message: 'no_empty_fields', filledCount: 0 };
+            warn('中止：没有可填充的空字段');
+            return { success: false, message: '没有可填充的空字段', filledCount: 0 };
         }
 
         const fieldRows = emptyFields.map(fieldText);
         const entryRows = dataItems.map(entryText);
+        const itemNameKeys = dataItems.map(item => normalizeKey(item?.name || ''));
+
+        // 规则优先：字段 key 与数据 name 完全一致时直接填充，避免模型误配。
+        const prefilledFieldSet = new Set();
+        const usedItemSet = new Set();
+        let ruleFilledCount = 0;
+        for (let fi = 0; fi < emptyFields.length; fi++) {
+            const field = emptyFields[fi];
+            const keys = fieldExactKeys(field);
+            if (!keys.length) continue;
+
+            let matchedItemIdx = -1;
+            for (let ei = 0; ei < itemNameKeys.length; ei++) {
+                if (usedItemSet.has(ei)) continue;
+                const nameKey = itemNameKeys[ei];
+                if (nameKey && keys.includes(nameKey)) {
+                    matchedItemIdx = ei;
+                    break;
+                }
+            }
+
+            if (matchedItemIdx >= 0) {
+                const ok = setInputValue(field, String(dataItems[matchedItemIdx].value || ''));
+                log('规则精确匹配命中', {
+                    fieldIdx: fi,
+                    entryIdx: matchedItemIdx,
+                    entryName: dataItems[matchedItemIdx].name,
+                    ok
+                });
+                if (ok) {
+                    prefilledFieldSet.add(fi);
+                    usedItemSet.add(matchedItemIdx);
+                    ruleFilledCount += 1;
+                }
+            }
+        }
 
         const seqLen = 16;
         const vocabSize = 4096;
@@ -180,68 +257,93 @@
         try {
             session = await getSession(modelName, modelBuffer);
         } catch (e) {
-            errlog('session create failed', e);
-            return { success: false, message: String(e.message || e), filledCount: 0 };
+            errlog('创建 ONNX 会话失败', e);
+            return { success: false, message: `创建会话失败: ${String(e.message || e)}`, filledCount: 0 };
         }
 
-        const fieldIds = buildTensor2D(fieldRows, seqLen, vocabSize);
-        const entryIds = buildTensor2D(entryRows, seqLen, vocabSize);
+        const remainFieldIdx = [];
+        for (let i = 0; i < fieldRows.length; i++) {
+            if (!prefilledFieldSet.has(i)) remainFieldIdx.push(i);
+        }
+        const remainEntryIdx = [];
+        for (let i = 0; i < entryRows.length; i++) {
+            if (!usedItemSet.has(i)) remainEntryIdx.push(i);
+        }
+
+        if (remainFieldIdx.length === 0 || remainEntryIdx.length === 0) {
+            const result = {
+                success: ruleFilledCount > 0,
+                message: ruleFilledCount > 0 ? '完成' : '未达到阈值或无匹配',
+                filledCount: ruleFilledCount
+            };
+            log('仅规则匹配完成，无需模型推理', result);
+            return result;
+        }
+
+        const remainFieldRows = remainFieldIdx.map(i => fieldRows[i]);
+        const remainEntryRows = remainEntryIdx.map(i => entryRows[i]);
+        const fieldIds = buildTensor2D(remainFieldRows, seqLen, vocabSize);
+        const entryIds = buildTensor2D(remainEntryRows, seqLen, vocabSize);
 
         const feeds = {
-            field_token_ids: new ort.Tensor('int64', fieldIds, [fieldRows.length, seqLen]),
-            entry_token_ids: new ort.Tensor('int64', entryIds, [entryRows.length, seqLen])
+            field_token_ids: new ort.Tensor('int64', fieldIds, [remainFieldRows.length, seqLen]),
+            entry_token_ids: new ort.Tensor('int64', entryIds, [remainEntryRows.length, seqLen])
         };
 
         let output;
         try {
-            log('running inference', {
-                fieldShape: [fieldRows.length, seqLen],
-                entryShape: [entryRows.length, seqLen]
+            log('开始推理', {
+                fieldShape: [remainFieldRows.length, seqLen],
+                entryShape: [remainEntryRows.length, seqLen]
             });
             output = await session.run(feeds);
         } catch (e) {
-            errlog('inference failed', e);
-            return { success: false, message: `inference_failed:${String(e.message || e)}`, filledCount: 0 };
+            errlog('推理失败', e);
+            return { success: false, message: `推理失败: ${String(e.message || e)}`, filledCount: 0 };
         }
 
         const first = output.logits || output[Object.keys(output)[0]];
-        if (!first) return { success: false, message: 'missing_logits', filledCount: 0 };
+        if (!first) return { success: false, message: '模型输出缺少 logits', filledCount: 0 };
         const parsed = readLogits(first);
         if (!parsed) {
-            warn('invalid logits shape', first.dims);
-            return { success: false, message: 'invalid_logits_shape', filledCount: 0 };
+            warn('logits 形状无效', first.dims);
+            return { success: false, message: 'logits 形状无效', filledCount: 0 };
         }
-        log('inference output', { logitsShape: [parsed.rows, parsed.cols] });
+        log('推理输出', { logitsShape: [parsed.rows, parsed.cols] });
 
-        const pairs = greedyMatch(parsed.data, parsed.rows, parsed.cols);
-        log('greedy pairs generated', { pairCount: pairs.length });
-        let filledCount = 0;
+        const pairs = matchWithConfidence(parsed.data, parsed.rows, parsed.cols, confidenceThreshold);
+        log('置信度过滤后匹配数', { pairCount: pairs.length, confidenceThreshold });
+        let modelFilledCount = 0;
         for (const p of pairs) {
-            const field = emptyFields[p.fieldIdx];
-            const item = dataItems[p.entryIdx];
+            const originFieldIdx = remainFieldIdx[p.fieldIdx];
+            const originEntryIdx = remainEntryIdx[p.entryIdx];
+            const field = emptyFields[originFieldIdx];
+            const item = dataItems[originEntryIdx];
             if (!field || !item) continue;
             const ok = setInputValue(field, String(item.value || ''));
-            log('fill attempt', {
-                fieldIdx: p.fieldIdx,
-                entryIdx: p.entryIdx,
+            log('填充尝试', {
+                fieldIdx: originFieldIdx,
+                entryIdx: originEntryIdx,
                 entryName: item.name,
+                confidence: p.confidence,
                 ok
             });
-            if (ok) filledCount += 1;
+            if (ok) modelFilledCount += 1;
         }
 
-        const result = { success: filledCount > 0, message: filledCount > 0 ? 'ok' : 'no_match', filledCount };
-        log('fill completed', { ...result, elapsedMs: Date.now() - t0 });
+        const filledCount = ruleFilledCount + modelFilledCount;
+        const result = { success: filledCount > 0, message: filledCount > 0 ? '完成' : '未达到阈值或无匹配', filledCount };
+        log('填充完成', { ...result, elapsedMs: Date.now() - t0 });
         return result;
     }
 
     window.addEventListener('message', async (event) => {
         const data = event.data;
         if (!data || data.type !== 'DATA_FILLER_AI_FILL_ALL') return;
-        log('received fill message');
+        log('收到填充消息');
 
         const result = await aiFillWithOnnx(data);
-        log('posting fill result', result);
+        log('回传填充结果', result);
         event.source?.postMessage({
             type: 'DATA_FILLER_AI_FILL_RESULT',
             success: result.success,
