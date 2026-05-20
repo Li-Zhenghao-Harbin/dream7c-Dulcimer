@@ -1,4 +1,4 @@
-// 侧边栏数据管理器
+﻿// 渚ц竟鏍忔暟鎹鐞嗗櫒
 class SidebarManager {
     constructor() {
         this.dataItems = [];
@@ -103,7 +103,7 @@ class SidebarManager {
                     if (!primaryData && backupData) {
                         chrome.storage.local.set({ dataItems: resolvedItems }, () => {
                             if (chrome.runtime.lastError) {
-                                console.error('自动恢复主数据失败:', chrome.runtime.lastError);
+                                console.error('鑷姩鎭㈠涓绘暟鎹け璐?', chrome.runtime.lastError);
                             }
                         });
                     }
@@ -248,7 +248,7 @@ class SidebarManager {
         </div>
         <div class="data-actions">
           <button class="edit-btn" data-id="${item.id}" title="编辑">✎</button>
-          <button class="delete-btn" data-id="${item.id}" title="删除">X</button>
+          <button class="delete-btn" data-id="${item.id}" title="删除">×</button>
         </div>
       </div>
     `;
@@ -831,7 +831,8 @@ class SidebarManager {
         }
 
         panel.classList.toggle('collapsed', this.isGroupPanelCollapsed);
-        toggleBtn.textContent = this.isGroupPanelCollapsed ? '展开' : '收起';
+        toggleBtn.textContent = this.isGroupPanelCollapsed ? '▸' : '▾';
+        toggleBtn.title = this.isGroupPanelCollapsed ? '展开' : '收起';
     }
 
     toggleGroupPanel() {
@@ -848,7 +849,8 @@ class SidebarManager {
         }
 
         panel.classList.toggle('collapsed', this.isAddFormCollapsed);
-        toggleBtn.textContent = this.isAddFormCollapsed ? '展开' : '收起';
+        toggleBtn.textContent = this.isAddFormCollapsed ? '▸' : '▾';
+        toggleBtn.title = this.isAddFormCollapsed ? '展开' : '收起';
     }
 
     toggleAddForm() {
@@ -927,5 +929,8 @@ class SidebarManager {
     }
 }
 
-// 初始化侧边栏
+// 初始化侧栏
 new SidebarManager();
+
+
+

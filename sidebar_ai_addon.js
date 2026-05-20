@@ -1,6 +1,7 @@
 ﻿// 侧栏增强脚本：选择本地 ONNX 模型并触发自动填充。
 (function () {
     let selectedModel = null;
+    let isAutofillCollapsed = false;
     const MODEL_CACHE_KEY = 'aiAutofillSelectedModel';
     const LOG_PREFIX = '[自动填充][侧栏]';
     const log = (...args) => console.log(LOG_PREFIX, ...args);
@@ -78,6 +79,13 @@
         }
     }
 
+    function updateAutofillPanelState(panelEl, toggleBtn) {
+        if (!panelEl || !toggleBtn) return;
+        panelEl.classList.toggle('collapsed', isAutofillCollapsed);
+        toggleBtn.textContent = isAutofillCollapsed ? '▸' : '▾';
+        toggleBtn.title = isAutofillCollapsed ? '展开' : '收起';
+    }
+
     function setupButton() {
         const content = document.querySelector('.sidebar-content');
         const dataList = document.getElementById('data-list');
@@ -91,11 +99,22 @@
         document.body.appendChild(modelInput);
 
         const panel = document.createElement('div');
-        panel.className = 'autofill-panel';
+        panel.className = 'group-panel autofill-panel';
+
+        const head = document.createElement('div');
+        head.className = 'group-panel-head';
 
         const title = document.createElement('div');
-        title.className = 'autofill-panel-title';
+        title.className = 'group-panel-title';
         title.textContent = '自动填充';
+
+        const actions = document.createElement('div');
+        actions.className = 'group-panel-actions';
+
+        const toggleBtn = document.createElement('button');
+        toggleBtn.className = 'group-head-btn';
+        toggleBtn.id = 'toggle-autofill-panel-btn';
+        toggleBtn.type = 'button';
 
         const modelBtn = document.createElement('button');
         modelBtn.className = 'autofill-btn autofill-model-btn';
@@ -112,12 +131,20 @@
         const status = document.createElement('div');
         status.className = 'autofill-model-status';
 
-        panel.appendChild(title);
-        panel.appendChild(modelBtn);
-        panel.appendChild(runBtn);
-        panel.appendChild(status);
+        const body = document.createElement('div');
+        body.className = 'group-panel-body autofill-panel-body';
+        body.appendChild(modelBtn);
+        body.appendChild(runBtn);
+        body.appendChild(status);
+
+        actions.appendChild(toggleBtn);
+        head.appendChild(title);
+        head.appendChild(actions);
+        panel.appendChild(head);
+        panel.appendChild(body);
         content.insertBefore(panel, dataList);
         updateModelStatus(status);
+        updateAutofillPanelState(panel, toggleBtn);
         restoreModelFromSession((cached) => {
             if (!cached) return;
             selectedModel = cached;
@@ -126,6 +153,11 @@
                 name: cached.name,
                 bytes: cached.bytes.byteLength
             });
+        });
+
+        toggleBtn.addEventListener('click', () => {
+            isAutofillCollapsed = !isAutofillCollapsed;
+            updateAutofillPanelState(panel, toggleBtn);
         });
 
         modelBtn.addEventListener('click', () => {
