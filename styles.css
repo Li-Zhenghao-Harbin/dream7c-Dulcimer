@@ -585,3 +585,64 @@ html, body {
     font-size: 12px;
     cursor: pointer;
 }
+
+/* 自动填充（内容区轻量区分样式） */
+.autofill-panel {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding: 8px 10px;
+    border: 1px dashed #c8d8f0;
+    border-radius: 6px;
+    background: #f6f9ff;
+}
+
+.autofill-panel-title {
+    font-size: 12px;
+    color: #31557f;
+    font-weight: 700;
+    margin-right: 4px;
+}
+
+.autofill-btn {
+    border: 1px solid #9db7df;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 5px 10px;
+    line-height: 1.2;
+}
+
+.autofill-model-btn {
+    background: #ffffff;
+    color: #406392;
+}
+
+.autofill-model-btn:hover {
+    background: #f1f6ff;
+}
+
+.autofill-run-btn {
+    background: #88abda;
+    color: #fff;
+    border-color: #88abda;
+}
+
+.autofill-run-btn:hover {
+    background: #789bc8;
+}
+
+.autofill-model-status {
+    width: 100%;
+    font-size: 11px;
+    color: #7d8da3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.autofill-model-status.ready {
+    color: #2f7a52;
+}
