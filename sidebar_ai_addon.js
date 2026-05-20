@@ -111,6 +111,12 @@
         const actions = document.createElement('div');
         actions.className = 'group-panel-actions';
 
+        const runBtn = document.createElement('button');
+        runBtn.className = 'autofill-btn autofill-run-btn';
+        runBtn.id = 'autofill-run-btn';
+        runBtn.title = '使用已选模型执行自动填充';
+        runBtn.textContent = '自动填充';
+
         const toggleBtn = document.createElement('button');
         toggleBtn.className = 'group-head-btn';
         toggleBtn.id = 'toggle-autofill-panel-btn';
@@ -122,21 +128,15 @@
         modelBtn.title = '选择本地 ONNX 模型';
         modelBtn.textContent = '选择模型';
 
-        const runBtn = document.createElement('button');
-        runBtn.className = 'autofill-btn autofill-run-btn';
-        runBtn.id = 'autofill-run-btn';
-        runBtn.title = '使用已选模型执行自动填充';
-        runBtn.textContent = '自动填充';
-
         const status = document.createElement('div');
         status.className = 'autofill-model-status';
 
         const body = document.createElement('div');
         body.className = 'group-panel-body autofill-panel-body';
         body.appendChild(modelBtn);
-        body.appendChild(runBtn);
         body.appendChild(status);
 
+        actions.appendChild(runBtn);
         actions.appendChild(toggleBtn);
         head.appendChild(title);
         head.appendChild(actions);

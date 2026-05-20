@@ -607,6 +607,14 @@ html, body {
     display: none;
 }
 
+.autofill-panel .group-panel-actions {
+    align-items: center;
+}
+
+.autofill-panel .autofill-run-btn {
+    padding: 4px 10px;
+}
+
 .autofill-btn {
     border: 1px solid #9db7df;
     border-radius: 4px;
