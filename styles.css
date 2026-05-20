@@ -490,16 +490,16 @@ html, body {
 }
 
 .add-btn:hover {
-    background: #88abda;
+    background: #789bc8;
 }
 
 .update-btn {
-    background: #2196F3;
+    background: #88abda;
     color: white;
 }
 
 .update-btn:hover {
-    background: #0b7dda;
+    background: #789bc8;
 }
 
 .cancel-btn {
