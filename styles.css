@@ -112,8 +112,8 @@ html, body {
 .group-panel {
     padding: 8px 10px;
     margin-bottom: 8px;
-    background: #f9f9f9;
-    border: 1px solid #eee;
+    background: #eef4ff;
+    border: 1px solid #d6e4fa;
     border-radius: 4px;
 }
 
@@ -139,8 +139,11 @@ html, body {
     background: #eef3fb;
     color: #35537a;
     border-radius: 3px;
-    font-size: 11px;
-    padding: 2px 8px;
+    font-size: 14px;
+    line-height: 1;
+    width: 24px;
+    height: 24px;
+    padding: 0;
     cursor: pointer;
 }
 
@@ -363,10 +366,10 @@ html, body {
 
 .add-form {
     margin-top: 12px;
-    padding: 15px;
-    background: #f9f9f9;
+    padding: 8px 10px;
+    background: #eef4ff;
     border-radius: 4px;
-    border: 1px solid #eee;
+    border: 1px solid #d6e4fa;
 }
 
 .add-form-head {
@@ -376,7 +379,7 @@ html, body {
 }
 
 .add-form-body {
-    margin-top: 10px;
+    margin-top: 8px;
 }
 
 .add-form.collapsed .add-form-body {
@@ -390,7 +393,7 @@ html, body {
 }
 
 .form-group {
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
 .form-group label {
@@ -406,7 +409,7 @@ html, body {
     border: 1px solid #ddd;
     border-radius: 3px;
     box-sizing: border-box;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .form-group input:focus {
@@ -419,7 +422,7 @@ html, body {
     border-radius: 3px;
     background: white;
     padding: 8px 10px;
-    max-height: 150px;
+    max-height: 120px;
     overflow-y: auto;
 }
 
@@ -467,17 +470,18 @@ html, body {
 .form-actions {
     display: flex;
     gap: 8px;
-    margin-top: 15px;
+    margin-top: 10px;
 }
 
 .add-btn, .update-btn, .cancel-btn {
     flex: 1;
-    padding: 10px;
+    height: 32px;
+    padding: 0 10px;
     border: none;
-    border-radius: 4px;
+    border-radius: 3px;
     cursor: pointer;
-    font-size: 14px;
-    font-weight: bold;
+    font-size: 12px;
+    font-weight: 600;
 }
 
 .add-btn {
@@ -486,16 +490,16 @@ html, body {
 }
 
 .add-btn:hover {
-    background: #88abda;
+    background: #789bc8;
 }
 
 .update-btn {
-    background: #2196F3;
+    background: #88abda;
     color: white;
 }
 
 .update-btn:hover {
-    background: #0b7dda;
+    background: #789bc8;
 }
 
 .cancel-btn {

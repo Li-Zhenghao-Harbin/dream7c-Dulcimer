@@ -248,7 +248,7 @@ class SidebarManager {
         </div>
         <div class="data-actions">
           <button class="edit-btn" data-id="${item.id}" title="编辑">✎</button>
-          <button class="delete-btn" data-id="${item.id}" title="删除">X</button>
+          <button class="delete-btn" data-id="${item.id}" title="删除">×</button>
         </div>
       </div>
     `;
@@ -831,7 +831,8 @@ class SidebarManager {
         }
 
         panel.classList.toggle('collapsed', this.isGroupPanelCollapsed);
-        toggleBtn.textContent = this.isGroupPanelCollapsed ? '展开' : '收起';
+        toggleBtn.textContent = this.isGroupPanelCollapsed ? '▸' : '▾';
+        toggleBtn.title = this.isGroupPanelCollapsed ? '展开' : '收起';
     }
 
     toggleGroupPanel() {
@@ -848,7 +849,8 @@ class SidebarManager {
         }
 
         panel.classList.toggle('collapsed', this.isAddFormCollapsed);
-        toggleBtn.textContent = this.isAddFormCollapsed ? '展开' : '收起';
+        toggleBtn.textContent = this.isAddFormCollapsed ? '▸' : '▾';
+        toggleBtn.title = this.isAddFormCollapsed ? '展开' : '收起';
     }
 
     toggleAddForm() {
