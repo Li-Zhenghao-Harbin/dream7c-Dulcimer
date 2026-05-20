@@ -1,6 +1,7 @@
 ﻿// 侧栏增强脚本：选择本地 ONNX 模型并触发自动填充。
 (function () {
     let selectedModel = null;
+    const MODEL_CACHE_KEY = 'aiAutofillSelectedModel';
     const LOG_PREFIX = '[自动填充][侧栏]';
     const log = (...args) => console.log(LOG_PREFIX, ...args);
     const warn = (...args) => console.warn(LOG_PREFIX, ...args);
@@ -26,6 +27,41 @@
             const items = Array.isArray(result.dataItems) ? result.dataItems : [];
             log('已读取 dataItems', { count: items.length });
             cb(items);
+        });
+    }
+
+    function saveModelToSession(model, cb) {
+        if (!chrome.storage?.session) {
+            cb && cb(false);
+            return;
+        }
+        chrome.storage.session.set({ [MODEL_CACHE_KEY]: model }, () => {
+            if (chrome.runtime.lastError) {
+                warn('缓存模型到 session 失败', chrome.runtime.lastError);
+                cb && cb(false);
+                return;
+            }
+            cb && cb(true);
+        });
+    }
+
+    function restoreModelFromSession(cb) {
+        if (!chrome.storage?.session) {
+            cb(null);
+            return;
+        }
+        chrome.storage.session.get([MODEL_CACHE_KEY], (result) => {
+            if (chrome.runtime.lastError) {
+                warn('从 session 恢复模型失败', chrome.runtime.lastError);
+                cb(null);
+                return;
+            }
+            const cached = result && result[MODEL_CACHE_KEY];
+            if (!cached || !(cached.bytes instanceof ArrayBuffer) || !cached.name) {
+                cb(null);
+                return;
+            }
+            cb(cached);
         });
     }
 
@@ -82,6 +118,15 @@
         panel.appendChild(status);
         content.insertBefore(panel, dataList);
         updateModelStatus(status);
+        restoreModelFromSession((cached) => {
+            if (!cached) return;
+            selectedModel = cached;
+            updateModelStatus(status);
+            log('已从 session 恢复模型', {
+                name: cached.name,
+                bytes: cached.bytes.byteLength
+            });
+        });
 
         modelBtn.addEventListener('click', () => {
             log('点击选择模型按钮');
@@ -99,6 +144,11 @@
                 selectedModel = { name: file.name, bytes: buffer };
                 updateModelStatus(status);
                 log('模型加载完成', { name: file.name, bytes: buffer.byteLength });
+                saveModelToSession(selectedModel, (ok) => {
+                    if (ok) {
+                        log('模型已缓存到 session', { name: file.name });
+                    }
+                });
                 showNotification(`模型已加载：${file.name}`, 'success');
             } catch (err) {
                 errlog('读取模型文件失败', err);
