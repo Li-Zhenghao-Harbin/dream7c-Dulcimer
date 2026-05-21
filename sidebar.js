@@ -960,7 +960,7 @@ class SidebarManager {
             return;
         }
 
-        button.textContent = '⇄';
+        button.textContent = '切换';
         button.title = this.sidebarSide === 'right' ? '切换到左侧' : '切换到右侧';
     }
 

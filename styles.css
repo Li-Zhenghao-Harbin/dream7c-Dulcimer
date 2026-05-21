@@ -3,7 +3,7 @@
     position: fixed;
     top: 0;
     right: 0;
-    width: 305px;
+    width: 320px;
     height: 100vh;
     border: none;
     z-index: 2147483647;
@@ -157,10 +157,10 @@ html, body {
 
 .settings-modal {
     width: min(100%, 260px);
-    background: #ffffff;
+    background: #eef4ff;
     border: 1px solid #d6e4fa;
-    border-radius: 10px;
-    box-shadow: 0 16px 40px rgba(34, 58, 92, 0.18);
+    border-radius: 8px;
+    box-shadow: 0 16px 40px rgba(34, 58, 92, 0.2);
     overflow: hidden;
 }
 
@@ -169,14 +169,14 @@ html, body {
     align-items: center;
     justify-content: space-between;
     padding: 12px 14px;
-    background: #eef4ff;
+    background: #88abda;
     border-bottom: 1px solid #d6e4fa;
 }
 
 .settings-modal-title {
     font-size: 14px;
     font-weight: 700;
-    color: #35537a;
+    color: #ffffff;
 }
 
 .settings-close-btn {
@@ -184,15 +184,15 @@ html, body {
     height: 24px;
     border: none;
     border-radius: 3px;
-    background: transparent;
-    color: #587291;
+    background: rgba(255,255,255,0.18);
+    color: #ffffff;
     cursor: pointer;
     font-size: 16px;
     line-height: 1;
 }
 
 .settings-close-btn:hover {
-    background: #e4ecfb;
+    background: rgba(255,255,255,0.28);
 }
 
 .settings-section {
@@ -208,7 +208,7 @@ html, body {
     margin-bottom: 10px;
     font-size: 12px;
     font-weight: 700;
-    color: #5a6f8d;
+    color: #35537a;
 }
 
 .settings-actions {
@@ -219,17 +219,17 @@ html, body {
 .settings-action-btn {
     flex: 1;
     height: 32px;
-    border: 1px solid #d5deee;
-    border-radius: 6px;
-    background: #eef4ff;
-    color: #35537a;
+    border: none;
+    border-radius: 4px;
+    background: #88abda;
+    color: #ffffff;
     cursor: pointer;
     font-size: 12px;
     font-weight: 600;
 }
 
 .settings-action-btn:hover {
-    background: #e4ecfb;
+    background: #789bc8;
 }
 
 .group-panel {

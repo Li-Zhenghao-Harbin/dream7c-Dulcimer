@@ -178,7 +178,7 @@ class SidebarManager {
         this.sidebarResizer = null;
         this.resizeOverlay = null;
         this.isVisible = false;
-        this.sidebarWidth = 305;
+        this.sidebarWidth = 320;
         this.sidebarSide = 'right';
         this.isResizing = false;
         this.resizerWidth = 10;
