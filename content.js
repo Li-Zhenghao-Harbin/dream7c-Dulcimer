@@ -45,24 +45,23 @@ document.addEventListener('focusin', function(e) {
     }
 });
 
-// 设置输入框的值
-function setInputValue(input, value) {
+function emitInputEvents(input) {
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+// 覆盖设置输入框的值
+function overwriteInputValue(input, value) {
     if (!input) return false;
 
     try {
-        // 不同类型的输入框处理
         if (input.isContentEditable) {
             input.textContent = value;
         } else {
-            // 直接设置值
             input.value = value;
-
-            // 触发输入事件，确保页面能检测到值变化
-            input.dispatchEvent(new Event('input', { bubbles: true }));
-            input.dispatchEvent(new Event('change', { bubbles: true }));
         }
 
-        // 聚焦并选中所有文本
+        emitInputEvents(input);
         input.focus();
         if (input.select) {
             input.select();
@@ -75,11 +74,73 @@ function setInputValue(input, value) {
     }
 }
 
+function appendToTextInput(input, value) {
+    const currentValue = String(input.value || '');
+    const hasSelection = typeof input.selectionStart === 'number' && typeof input.selectionEnd === 'number';
+    const insertAt = hasSelection ? input.selectionEnd : currentValue.length;
+    const nextValue = currentValue.slice(0, insertAt) + value + currentValue.slice(insertAt);
+
+    input.value = nextValue;
+    emitInputEvents(input);
+    input.focus();
+
+    const caret = insertAt + value.length;
+    if (typeof input.setSelectionRange === 'function') {
+        input.setSelectionRange(caret, caret);
+    }
+    return true;
+}
+
+function appendToContentEditable(input, value) {
+    input.focus();
+
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        if (input.contains(range.startContainer)) {
+            range.collapse(false);
+            const textNode = document.createTextNode(value);
+            range.insertNode(textNode);
+            range.setStartAfter(textNode);
+            range.setEndAfter(textNode);
+            selection.removeAllRanges();
+            selection.addRange(range);
+            emitInputEvents(input);
+            return true;
+        }
+    }
+
+    input.textContent = `${input.textContent || ''}${value}`;
+    emitInputEvents(input);
+    return true;
+}
+
+function appendInputValue(input, value) {
+    if (!input) return false;
+
+    try {
+        if (input.isContentEditable) {
+            return appendToContentEditable(input, value);
+        }
+        return appendToTextInput(input, value);
+    } catch (error) {
+        console.error('追加输入框值时出错:', error);
+        return false;
+    }
+}
+
+function applyInputValue(input, value, fillMode) {
+    if (fillMode === 'append') {
+        return appendInputValue(input, value);
+    }
+    return overwriteInputValue(input, value);
+}
+
 // 填充数据到输入框
-function fillDataToInput(data) {
+function fillDataToInput(data, fillMode = 'overwrite') {
     // console.log('正在填充数据:', data);
 
-    if (!data || !data.value) {
+    if (!data || data.value === undefined || data.value === null) {
         console.error('数据无效');
         return { success: false, message: '数据无效' };
     }
@@ -87,7 +148,7 @@ function fillDataToInput(data) {
     // 首先尝试填充最后聚焦的输入框
     if (lastFocusedInput) {
         // console.log('使用最后聚焦的输入框:', lastFocusedInput);
-        const result = setInputValue(lastFocusedInput, data.value);
+        const result = applyInputValue(lastFocusedInput, String(data.value), fillMode);
         if (result) {
             // console.log('填充成功');
             return { success: true, message: '填充成功' };
@@ -99,7 +160,7 @@ function fillDataToInput(data) {
     const firstInput = document.querySelector('input, textarea');
     if (firstInput) {
         // console.log('找到第一个输入框:', firstInput);
-        const result = setInputValue(firstInput, data.value);
+        const result = applyInputValue(firstInput, String(data.value), fillMode);
         if (result) {
             // console.log('填充成功');
             return { success: true, message: '填充成功' };
@@ -443,7 +504,7 @@ class SidebarManager {
         switch (data.type) {
             case 'DATA_FILLER_FILL_DATA':
                 // 填充数据到输入框
-                const result = fillDataToInput(data.data);
+                const result = fillDataToInput(data.data, data.fillMode);
 
                 // 发送结果回iframe
                 this.sendMessageToIframe({

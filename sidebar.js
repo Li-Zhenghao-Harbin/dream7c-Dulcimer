@@ -6,6 +6,8 @@ class SidebarManager {
         this.currentFilterGroupId = 'all';
         this.isGroupPanelCollapsed = true;
         this.isAddFormCollapsed = false;
+        this.fillMode = 'overwrite';
+        this.isSettingsModalOpen = false;
         this.sidebarSide = 'right';
         this.currentEditId = null;
         this.draggedItem = null;
@@ -17,11 +19,82 @@ class SidebarManager {
 
     async init() {
         await this.loadData();
+        await this.loadFillMode();
         this.renderGroupControls();
         this.renderDataList();
         this.bindEvents();
+        this.updateFillModeButtons();
 
         window.addEventListener('message', this.handleMessage.bind(this));
+    }
+
+    async loadFillMode() {
+        try {
+            return new Promise((resolve) => {
+                chrome.storage.local.get(['fillMode'], (result) => {
+                    if (chrome.runtime.lastError) {
+                        console.error('读取填充模式失败:', chrome.runtime.lastError);
+                        resolve();
+                        return;
+                    }
+
+                    if (result.fillMode === 'append' || result.fillMode === 'overwrite') {
+                        this.fillMode = result.fillMode;
+                    }
+                    resolve();
+                });
+            });
+        } catch (error) {
+            console.error('加载填充模式失败:', error);
+        }
+    }
+
+    saveFillMode() {
+        chrome.storage.local.set({ fillMode: this.fillMode }, () => {
+            if (chrome.runtime.lastError) {
+                console.error('保存填充模式失败:', chrome.runtime.lastError);
+            }
+        });
+    }
+
+    updateFillModeButtons() {
+        document.querySelectorAll('.fill-mode-btn').forEach((button) => {
+            const isActive = button.dataset.mode === this.fillMode;
+            button.classList.toggle('active', isActive);
+            button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
+    }
+
+    setFillMode(mode) {
+        if (mode !== 'overwrite' && mode !== 'append') {
+            return;
+        }
+        this.fillMode = mode;
+        this.updateFillModeButtons();
+        this.saveFillMode();
+    }
+
+    updateSettingsModalState() {
+        const backdrop = document.getElementById('settings-modal-backdrop');
+        if (!backdrop) {
+            return;
+        }
+        backdrop.classList.toggle('hidden', !this.isSettingsModalOpen);
+    }
+
+    openSettingsModal() {
+        this.isSettingsModalOpen = true;
+        this.updateSettingsModalState();
+    }
+
+    closeSettingsModal() {
+        this.isSettingsModalOpen = false;
+        this.updateSettingsModalState();
+    }
+
+    toggleSettingsModal() {
+        this.isSettingsModalOpen = !this.isSettingsModalOpen;
+        this.updateSettingsModalState();
     }
 
     normalizeGroups(groups) {
@@ -373,10 +446,12 @@ class SidebarManager {
     fillData(dataItem) {
         window.parent.postMessage({
             type: 'DATA_FILLER_FILL_DATA',
-            data: dataItem
+            data: dataItem,
+            fillMode: this.fillMode
         }, '*');
 
-        this.showNotification(`正在填充: ${dataItem.name}`, 'info');
+        const modeText = this.fillMode === 'append' ? '追加' : '覆盖';
+        this.showNotification(`正在${modeText}填充: ${dataItem.name}`, 'info');
     }
 
     editData(id) {
@@ -700,6 +775,26 @@ class SidebarManager {
             this.createGroup();
         });
 
+        document.querySelectorAll('.fill-mode-btn').forEach((button) => {
+            button.addEventListener('click', () => {
+                this.setFillMode(button.dataset.mode);
+            });
+        });
+
+        document.getElementById('settings-btn').addEventListener('click', () => {
+            this.toggleSettingsModal();
+        });
+
+        document.getElementById('settings-close-btn').addEventListener('click', () => {
+            this.closeSettingsModal();
+        });
+
+        document.getElementById('settings-modal-backdrop').addEventListener('click', (event) => {
+            if (event.target.id === 'settings-modal-backdrop') {
+                this.closeSettingsModal();
+            }
+        });
+
         document.getElementById('group-filter').addEventListener('change', (e) => {
             this.currentFilterGroupId = e.target.value;
             this.renderGroupControls();
@@ -820,6 +915,7 @@ class SidebarManager {
         this.updateGroupPanelState();
         this.updateAddFormState();
         this.updateSideToggleButton();
+        this.updateSettingsModalState();
     }
 
     updateGroupPanelState() {

@@ -11,9 +11,8 @@
         <div class="sidebar-title" id="about">柒幻 扬琴<span style="font-size: 12px; margin-left: 10px;">v 1.5</span>&nbsp;<span class="question-circle" id="about-question-circle">?</span></div>
         <div class="sidebar-buttons">
             <button class="io-btn icon-btn" id="side-toggle-btn" title="切换停靠方向">⇄</button>
-            <button class="io-btn" id="import-btn">导入</button>
+            <button class="io-btn" id="settings-btn" title="设置">设置</button>
             <input type="file" id="hidden-file-input" accept=".json" style="display: none;">
-            <button class="io-btn" id="export-btn">导出</button>
             <button class="close-btn" id="close-btn">×</button>
         </div>
     </div>
@@ -70,6 +69,31 @@
                     <button id="update-btn" class="update-btn">更新数据</button>
                     <button id="cancel-btn" class="cancel-btn">取消编辑</button>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="settings-modal-backdrop hidden" id="settings-modal-backdrop">
+    <div class="settings-modal" id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+        <div class="settings-modal-head">
+            <div class="settings-modal-title" id="settings-modal-title">设置</div>
+            <button type="button" class="settings-close-btn" id="settings-close-btn" title="关闭">×</button>
+        </div>
+
+        <div class="settings-section">
+            <div class="settings-section-title">填充模式</div>
+            <div class="fill-mode-toggle" role="group" aria-label="填充模式">
+                <button type="button" class="fill-mode-btn active" id="fill-mode-overwrite-btn" data-mode="overwrite">覆盖</button>
+                <button type="button" class="fill-mode-btn" id="fill-mode-append-btn" data-mode="append">追加</button>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <div class="settings-section-title">数据管理</div>
+            <div class="settings-actions">
+                <button type="button" class="settings-action-btn" id="import-btn">导入</button>
+                <button type="button" class="settings-action-btn" id="export-btn">导出</button>
             </div>
         </div>
     </div>

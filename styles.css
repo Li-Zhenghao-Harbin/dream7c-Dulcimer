@@ -109,6 +109,129 @@ html, body {
     padding: 15px;
 }
 
+.fill-mode-toggle {
+    display: inline-flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid #d5deee;
+    border-radius: 999px;
+    padding: 2px;
+}
+
+.fill-mode-btn {
+    min-width: 52px;
+    height: 26px;
+    padding: 0 10px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: #5c6f8b;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.fill-mode-btn:hover {
+    background: #f2f6fc;
+}
+
+.fill-mode-btn.active {
+    background: #88abda;
+    color: #ffffff;
+}
+
+.settings-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483647;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    background: rgba(30, 49, 76, 0.22);
+}
+
+.settings-modal-backdrop.hidden {
+    display: none;
+}
+
+.settings-modal {
+    width: min(100%, 260px);
+    background: #ffffff;
+    border: 1px solid #d6e4fa;
+    border-radius: 10px;
+    box-shadow: 0 16px 40px rgba(34, 58, 92, 0.18);
+    overflow: hidden;
+}
+
+.settings-modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    background: #eef4ff;
+    border-bottom: 1px solid #d6e4fa;
+}
+
+.settings-modal-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #35537a;
+}
+
+.settings-close-btn {
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 3px;
+    background: transparent;
+    color: #587291;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+}
+
+.settings-close-btn:hover {
+    background: #e4ecfb;
+}
+
+.settings-section {
+    padding: 14px;
+    border-bottom: 1px solid #eef3fb;
+}
+
+.settings-section:last-child {
+    border-bottom: none;
+}
+
+.settings-section-title {
+    margin-bottom: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #5a6f8d;
+}
+
+.settings-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.settings-action-btn {
+    flex: 1;
+    height: 32px;
+    border: 1px solid #d5deee;
+    border-radius: 6px;
+    background: #eef4ff;
+    color: #35537a;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.settings-action-btn:hover {
+    background: #e4ecfb;
+}
+
 .group-panel {
     padding: 8px 10px;
     margin-bottom: 8px;
