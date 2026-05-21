@@ -891,7 +891,7 @@ class SidebarManager {
         });
 
         document.getElementById('about-question-circle').addEventListener('click', () => {
-            alert('柒幻 扬琴\nv 1.5\nwww.dream7c.com');
+            alert('柒幻 扬琴\nv 1.6\nwww.dream7c.com');
         });
 
         function exportJSON(data, filename = 'data.json') {
